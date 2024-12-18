@@ -1,11 +1,12 @@
 import concurrent.futures
 from pyquery import PyQuery as pq
 import requests
-from concurrent.futures import ThreadPoolExecutor
+
 url = "https://www.rusplitka.ru/catalog/"
 urls = []
 
 
+# функция, с помощью которой мы парсим, он принимает переменную - ссылку сайта
 def parse_page(url_part):
     results = []
     response = requests.get(url_part)
@@ -13,13 +14,17 @@ def parse_page(url_part):
     products = doc('.item.item__3-col.desktop')
     for i in products:
         if pq(i).find(".item__in_store"):
-            results.append({'Название плитки': pq(i).find(".item__name").text(),
-                            'Цена': int(pq(i).find(".item__price").text()[3:7]),
-                            'Ссылка': 'https://www.rusplitka.ru' + pq(i).find(".item__name").attr('href')})
+            title = pq(i).find(".item__name").text()
+            price = int(pq(i).find(".item__price").text()[3:7])
+            href = pq(i).find(".item__name").attr('href')
+            results.append({'Название плитки': title,
+                            'Цена': price,
+                            'Ссылка': 'https://www.rusplitka.ru' + href})
     for result in results:
         print(result)
 
 
+# Составление списка ссылок сатов
 def all_urls(u):
     for i in range(1, 312):
         if i == 1:
@@ -30,8 +35,7 @@ def all_urls(u):
 
 all_urls(urls)
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-    # executor.map(all_urls, urls)
+with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
     executor.map(parse_page, urls)
 
 
